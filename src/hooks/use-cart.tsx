@@ -81,17 +81,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const remove: CartCtx["remove"] = async (cartItemId) => {
     const { error } = await supabase.from("cart_items").delete().eq("id", cartItemId);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await refresh();
   };
 
   const setQty: CartCtx["setQty"] = async (cartItemId, qty) => {
-    if (qty <= 0) return remove(cartItemId);
+    if (qty <= 0) { await remove(cartItemId); return; }
     const { error } = await supabase
       .from("cart_items")
       .update({ quantity: qty })
       .eq("id", cartItemId);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     await refresh();
   };
 
