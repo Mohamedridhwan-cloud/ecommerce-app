@@ -7,10 +7,10 @@ export const Route = createFileRoute("/_authenticated/account")({
 
 function AccountLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const nav = [
+  const nav: Array<{ to: "/account" | "/account/orders"; label: string; icon: typeof User; exact?: boolean }> = [
     { to: "/account", label: "Profile", icon: User, exact: true },
     { to: "/account/orders", label: "Orders", icon: Package },
-  ] as const;
+  ];
 
   return (
     <div className="container mx-auto grid gap-8 px-4 py-10 md:grid-cols-[220px_1fr]">
