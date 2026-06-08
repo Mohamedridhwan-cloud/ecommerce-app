@@ -73,7 +73,7 @@ function ProductsPage() {
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const update = (patch: Partial<typeof search>) =>
-    navigate({ search: (prev) => ({ ...prev, page: 1, ...patch }) as never });
+    navigate({ search: (prev: typeof search) => ({ ...prev, page: 1, ...patch }) as never });
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -145,7 +145,7 @@ function ProductsPage() {
             <Link
               key={i}
               to="/products"
-              search={(prev) => ({ ...prev, page: i + 1 }) as never}
+              search={(prev: typeof search) => ({ ...prev, page: i + 1 }) as never}
               className={`grid h-9 w-9 place-items-center rounded-md border text-sm ${page === i + 1 ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
             >
               {i + 1}
