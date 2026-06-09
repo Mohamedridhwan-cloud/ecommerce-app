@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { ProductCard, type Product } from "@/components/site/ProductCard";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { getFeaturedProducts, type Product } from "@/lib/products.functions";
+import { ProductCard } from "@/components/site/ProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Truck, ShieldCheck, Sparkles } from "lucide-react";
+
+const featuredQueryOptions = queryOptions({
+  queryKey: ["featured-products"],
+  queryFn: () => getFeaturedProducts(),
+});
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,22 +17,24 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Curated electronics, apparel, home goods and accessories — designed for everyday wonder." },
     ],
   }),
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(featuredQueryOptions);
+  },
   component: Home,
+  errorComponent: ({ error }) => (
+    <div role="alert" className="container mx-auto px-4 py-20 text-center text-destructive">
+      Failed to load products: {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
+      No products found.
+    </div>
+  ),
 });
 
 function Home() {
-  const { data: featured } = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("rating", { ascending: false })
-        .limit(8);
-      if (error) throw error;
-      return data as Product[];
-    },
-  });
+  const { data: featured } = useSuspenseQuery(featuredQueryOptions);
 
   return (
     <div>
@@ -57,7 +64,7 @@ function Home() {
           </div>
           <div className="relative hidden md:block">
             <div className="absolute inset-0 grid grid-cols-2 gap-4 p-4">
-              {featured?.slice(0, 4).map((p, i) => (
+              {featured.slice(0, 4).map((p: Product, i: number) => (
                 <div key={p.id} className={`overflow-hidden rounded-2xl shadow-glow ${i % 2 ? "translate-y-8" : ""}`}>
                   {p.image && <img src={p.image} alt={p.name} className="h-full w-full object-cover" />}
                 </div>
@@ -96,7 +103,7 @@ function Home() {
           <Button asChild variant="ghost"><Link to="/products">View all <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {featured?.map((p) => <ProductCard key={p.id} p={p} />)}
+          {featured.map((p: Product) => <ProductCard key={p.id} p={p} />)}
         </div>
       </section>
     </div>
