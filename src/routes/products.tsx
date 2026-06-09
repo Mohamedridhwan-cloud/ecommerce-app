@@ -20,6 +20,11 @@ const searchSchema = z.object({
 
 const PAGE_SIZE = 8;
 
+const productsQueryOptions = queryOptions({
+  queryKey: ["products"],
+  queryFn: () => getProducts(),
+});
+
 export const Route = createFileRoute("/products")({
   validateSearch: searchSchema,
   head: () => ({
@@ -28,7 +33,20 @@ export const Route = createFileRoute("/products")({
       { name: "description", content: "Browse the full Azura catalog. Search, filter, and sort across all categories." },
     ],
   }),
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(productsQueryOptions);
+  },
   component: ProductsPage,
+  errorComponent: ({ error }) => (
+    <div role="alert" className="container mx-auto px-4 py-20 text-center text-destructive">
+      Failed to load products: {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
+      No products found.
+    </div>
+  ),
 });
 
 function ProductsPage() {
@@ -36,33 +54,26 @@ function ProductsPage() {
   const navigate = Route.useNavigate();
   const [qLocal, setQLocal] = useState(search.q ?? "");
 
-  const { data: products } = useQuery({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Product[];
-    },
-  });
+  const { data: products } = useSuspenseQuery(productsQueryOptions);
 
   const categories = useMemo(
-    () => Array.from(new Set((products ?? []).map((p) => p.category))),
+    () => Array.from(new Set(products.map((p: Product) => p.category))),
     [products],
   );
 
   const filtered = useMemo(() => {
-    let list = products ?? [];
+    let list = products;
     if (search.q) {
       const t = search.q.toLowerCase();
-      list = list.filter((p) => p.name.toLowerCase().includes(t) || (p.brand ?? "").toLowerCase().includes(t));
+      list = list.filter((p: Product) => p.name.toLowerCase().includes(t) || (p.brand ?? "").toLowerCase().includes(t));
     }
-    if (search.category) list = list.filter((p) => p.category === search.category);
-    if (search.min != null) list = list.filter((p) => Number(p.price) >= search.min!);
-    if (search.max != null) list = list.filter((p) => Number(p.price) <= search.max!);
+    if (search.category) list = list.filter((p: Product) => p.category === search.category);
+    if (search.min != null) list = list.filter((p: Product) => Number(p.price) >= search.min!);
+    if (search.max != null) list = list.filter((p: Product) => Number(p.price) <= search.max!);
     switch (search.sort) {
-      case "price_asc": list = [...list].sort((a, b) => Number(a.price) - Number(b.price)); break;
-      case "price_desc": list = [...list].sort((a, b) => Number(b.price) - Number(a.price)); break;
-      case "rating": list = [...list].sort((a, b) => Number(b.rating) - Number(a.rating)); break;
+      case "price_asc": list = [...list].sort((a: Product, b: Product) => Number(a.price) - Number(b.price)); break;
+      case "price_desc": list = [...list].sort((a: Product, b: Product) => Number(b.price) - Number(a.price)); break;
+      case "rating": list = [...list].sort((a: Product, b: Product) => Number(b.rating) - Number(a.rating)); break;
       default: break;
     }
     return list;
@@ -99,7 +110,7 @@ function ProductsPage() {
           <SelectTrigger className="w-44"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
-            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {categories.map((c: string) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={search.sort ?? "newest"} onValueChange={(v) => update({ sort: v as typeof search.sort })}>
@@ -135,7 +146,7 @@ function ProductsPage() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {paged.map((p) => <ProductCard key={p.id} p={p} />)}
+          {paged.map((p: Product) => <ProductCard key={p.id} p={p} />)}
         </div>
       )}
 
