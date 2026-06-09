@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { ProductCard, type Product } from "@/components/site/ProductCard";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { getFeaturedProducts, type Product } from "@/lib/products.functions";
+import { ProductCard } from "@/components/site/ProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Truck, ShieldCheck, Sparkles } from "lucide-react";
+
+const featuredQueryOptions = queryOptions({
+  queryKey: ["featured-products"],
+  queryFn: () => getFeaturedProducts(),
+});
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,7 +17,20 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Curated electronics, apparel, home goods and accessories — designed for everyday wonder." },
     ],
   }),
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(featuredQueryOptions);
+  },
   component: Home,
+  errorComponent: ({ error }) => (
+    <div role="alert" className="container mx-auto px-4 py-20 text-center text-destructive">
+      Failed to load products: {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
+      No products found.
+    </div>
+  ),
 });
 
 function Home() {
