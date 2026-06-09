@@ -64,7 +64,7 @@ function Home() {
           </div>
           <div className="relative hidden md:block">
             <div className="absolute inset-0 grid grid-cols-2 gap-4 p-4">
-              {featured?.slice(0, 4).map((p, i) => (
+              {featured.slice(0, 4).map((p: Product, i: number) => (
                 <div key={p.id} className={`overflow-hidden rounded-2xl shadow-glow ${i % 2 ? "translate-y-8" : ""}`}>
                   {p.image && <img src={p.image} alt={p.name} className="h-full w-full object-cover" />}
                 </div>
