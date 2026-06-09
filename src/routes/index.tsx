@@ -34,18 +34,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const { data: featured } = useQuery({
-    queryKey: ["featured-products"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .order("rating", { ascending: false })
-        .limit(8);
-      if (error) throw error;
-      return data as Product[];
-    },
-  });
+  const { data: featured } = useSuspenseQuery(featuredQueryOptions);
 
   return (
     <div>
