@@ -103,7 +103,7 @@ function Home() {
           <Button asChild variant="ghost"><Link to="/products">View all <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {featured?.map((p) => <ProductCard key={p.id} p={p} />)}
+          {featured.map((p: Product) => <ProductCard key={p.id} p={p} />)}
         </div>
       </section>
     </div>
